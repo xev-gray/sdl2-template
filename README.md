@@ -18,4 +18,5 @@ Clone the repository in your file system and edit its files according to the com
 - Test/implement music and SFX management
 - Add a loading screen for long transitions
 - Use CMake instead of Makefile
+- Implement unit tests
 - BONUS: Add Vulkan support
