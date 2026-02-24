@@ -16,8 +16,8 @@ ifeq ($(OS), Windows_NT)   # Windows
 	DLL = *.dll
 endif
 
-# To compile from Unix to Windows, replace all
-# values in the following variables with the
+# To compile from Unix-like to Windows, replace
+# all values in the following variables with the
 # ones in comments.
 
 ifeq ($(UNAME), Darwin)    # MacOS
@@ -57,7 +57,7 @@ zip: small
 small: clean all mrproper
 
 all: $(OBJ)
-	$(CXX) $(INC) $(LIB) $^ -o $(NAME) $(EXT) $(CFLAGS)
+	$(CXX) $(INC) $(LIB) $^ -o $(EXE) $(EXT) $(CFLAGS)
 
 $(BIN)/%.o: $(SRC)/%.cpp
 	$(CXX) $(INC) $(LIB) -c $< -o $@ $(EXT) $(CFLAGS)
