@@ -11,9 +11,10 @@
 
 /* Other C++ libraries */
 #include <chrono>
+#include <cstring>
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
 
 /* Value for unchanging rect width/height */
 #define RECT_UNCHANGED 0
@@ -23,10 +24,12 @@
 #define APP_H 540
 
 /* Flags used for the App constructor */
-#define INIT_IMAGE  0b0001
-#define INIT_TTF    0b0010
-#define INIT_MIXER  0b0100
-#define INIT_NET    0b1000
+#define INIT_FAIL  0b00000000
+#define INIT_SDL   0b00000001
+#define INIT_IMAGE 0b00000010
+#define INIT_TTF   0b00000100
+#define INIT_MIXER 0b00001000
+#define INIT_NET   0b00010000
 
 /* States of a Click object */
 #define CLICK_DEFAULT 0
