@@ -2,59 +2,15 @@
 
 #pragma once
 
-#include "macros.hpp"
-
-/* Timestamp class for an easier timestamp
- * management (useful for the Gif class)
- */
-class Timestamp
-{
-public:
-	unsigned long static now();
-	unsigned long static now_ms();
-	double static now_double();
-};
-
-class Renderer;
+#include <common.hpp>
+#include <wrap.hpp>
 
 /* Abstract View object for the draw() method */
-class View
+class View : public Instantiable
 {
-protected:
-	static SDL_Renderer* renderer;
-
 public:
 	View() = default;
 	virtual bool draw() = 0;
-	friend class Renderer;
-};
-
-/* Renderer object used to handle the static
- * SDL_Renderer of the View object
- */
-class Renderer
-{
-public:
-	Renderer() = default;
-	static SDL_Renderer* const get();
-	static void set(SDL_Renderer* const newRenderer);
-};
-
-/* SDL_Rect object used to handle the selected
- * size inside each texture and the size of the
- * rendered texture
- */
-class Rect
-{
-protected:
-	SDL_Rect rect;
-
-public:
-	Rect();
-	Rect(const SDL_Rect rect);
-	Rect(const int x, const int y, const int w, const int h);
-	SDL_Rect get();
-	void set(SDL_Rect newRect);
 };
 
 /* Abstract Static object for other children
@@ -166,8 +122,8 @@ public:
 /* Spritesheet object, meant to be used for
  * back-end inputs and entities
  *
- * NOTE: The constructor loads a GIF file with
- * every needed texture.
+ * NOTE: The constructor loads a GIF file which
+ * should have every needed texture as its frames.
  */
 class Spritesheet final : public Anim
 {
@@ -190,12 +146,11 @@ public:
  * future update, for now they are there for
  * convenience.
  */
-class Front
+class Front : public Instantiable
 {
 private:
 	static std::shared_ptr<Front> instance;
 	SDL_Window* window;
-	SDL_Renderer* renderer;
 	std::unique_ptr<Canvas> canvas;
 	std::vector<std::shared_ptr<View>> views;
 	std::vector<std::shared_ptr<Image>> images;

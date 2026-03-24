@@ -41,10 +41,10 @@ endif
 SRC = src
 BIN = bin
 INC = -Iinclude
-CFLAGS = -Wall
+CFLAGS = -Wall -Ofast
 EXT += -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lSDL2_net
 # Include your own sources files below
-OBJ = $(addsuffix .o, $(addprefix $(BIN)/, main front back app inits handles))
+OBJ = $(addsuffix .o, $(addprefix $(BIN)/, main wrap front back app inits handles))
 
 # The 'zip' option is made to automatically create
 # a shippable archive of your app, but it works

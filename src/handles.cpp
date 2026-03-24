@@ -3,11 +3,18 @@
  * 'init.cpp' file. Use the template at the end
  * of this file to make a new one.
  *
+ * Since the BGM resets for every App::run() call
+ * you will need to call some handles from other
+ * handles and call every init you need for a
+ * single BGM.
+ *
  * NOTE: Do not forget to also write them in the
- * header and in the 'handles' vector in the main.
+ * header and in the 'handles' vector in the main
+ * (except for handles called from other handles,
+ * those should be static).
  */
 
-#include "handles.hpp"
+#include <handles.hpp>
 
 
 /* WARNING
@@ -19,71 +26,116 @@ Sint32 handlePass(const std::shared_ptr<Front> front, const std::shared_ptr<Back
 
 Sint32 handleWelcome(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	const inputs_t userInputs = back -> getUserInputs();
-	for(std::shared_ptr<Click> click : back -> getClicks())
+	// Pointer handling
+	if(front == nullptr)
 	{
-		switch(click -> pressed(userInputs))
-		{
-			// ...
-		}
+		SDL_Log("Cannot call handle function: Front-end is null\n");
+		return EXIT;
+	}
+	else if(back == nullptr)
+	{
+		SDL_Log("Cannot call handle function: Back-end is null\n");
+		return EXIT;
 	}
 
-	for(std::shared_ptr<Key> key : back -> getKeys())
+	else
 	{
-		switch(key -> pressed(userInputs.keys))
+		const inputs_t userInputs = back -> getUserInputs();
+		for(std::shared_ptr<Click> click : back -> getClicks())
 		{
-			case SDL_SCANCODE_RIGHT:
-				return INPUTTEST;
-				break;
+			switch(click -> pressed(userInputs))
+			{
+				// ...
+			}
 		}
+
+		for(std::shared_ptr<Key> key : back -> getKeys())
+		{
+			switch(key -> pressed(userInputs.keys))
+			{
+				case SDL_SCANCODE_RIGHT:
+					return INPUTTEST;
+					break;
+			}
+		}
+		return PASS;
 	}
-	return PASS;
 }
 
 Sint32 handleInputTest(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	const inputs_t userInputs = back -> getUserInputs();
-	for(std::shared_ptr<Click> click : back -> getClicks())
+	// Pointer handling
+	if(front == nullptr)
 	{
-		switch(click -> pressed(userInputs))
-		{
-			// ...
-		}
+		SDL_Log("Cannot call handle function: Front-end is null\n");
+		return EXIT;
+	}
+	else if(back == nullptr)
+	{
+		SDL_Log("Cannot call handle function: Back-end is null\n");
+		return EXIT;
 	}
 
-	for(std::shared_ptr<Key> key : back -> getKeys())
+	else
 	{
-		switch(key -> pressed(userInputs.keys))
+		const inputs_t userInputs = back -> getUserInputs();
+		for(std::shared_ptr<Click> click : back -> getClicks())
 		{
-			case SDL_SCANCODE_LEFT:
-				return WELCOME;
-				break;
+			switch(click -> pressed(userInputs))
+			{
+				// ...
+			}
 		}
+
+		for(std::shared_ptr<Key> key : back -> getKeys())
+		{
+			switch(key -> pressed(userInputs.keys))
+			{
+				case SDL_SCANCODE_LEFT:
+					return WELCOME;
+					break;
+			}
+		}
+		return PASS;
 	}
-	return PASS;
 }
 
 /* Handle function template
 
 Sint32 handleTemplate(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	const inputs_t userInputs = back -> getUserInputs();
-	for(std::shared_ptr<Click> click : back -> getClicks())
+	// Pointer handling
+	if(front == nullptr)
 	{
-		switch(click -> pressed(userInputs))
-		{
-			// Handle click events here
-		}
+		SDL_Log("Cannot call handle function: Front-end is null\n");
+		return EXIT;
+	}
+	else if(back == nullptr)
+	{
+		SDL_Log("Cannot call handle function: Back-end is null\n");
+		return EXIT;
 	}
 
-	for(std::shared_ptr<Key> key : back -> getKeys())
+	else
 	{
-		switch(key -> pressed(userInputs.keys))
+		const inputs_t userInputs = back -> getUserInputs();
+		for(std::shared_ptr<Click> click : back -> getClicks())
 		{
-			// Handle keys here
+			switch(click -> pressed(userInputs))
+			{
+				// Handle click events here
+			}
 		}
+
+		for(std::shared_ptr<Key> key : back -> getKeys())
+		{
+			switch(key -> pressed(userInputs.keys))
+			{
+				// Handle keys here
+			}
+		}
+		return PASS;
 	}
-	return PASS;
 }
 
 */

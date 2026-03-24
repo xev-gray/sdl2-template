@@ -7,7 +7,7 @@
  * header and in the 'inits' vector in the main.
  */
 
-#include "inits.hpp"
+#include <inits.hpp>
 
 
 /* WARNING
@@ -19,92 +19,142 @@ void initPass(const std::shared_ptr<Front> front, const std::shared_ptr<Back> ba
 
 void initWelcome(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	// Front
-	auto welc = front -> addText("Welcome to the demo", "res/fonts/comic-sans-ms.ttf", 90, {200, 200, 200, 255});
-	welc -> setDst(
-	{
-		(APP_W - (welc -> getDst()).w) / 2,
-		0,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+	// Pointer handling
+	if(front == nullptr)
+		SDL_Log("Cannot call init function: Front-end is null\n");
+	else if(back == nullptr)
+		SDL_Log("Cannot call init function: Back-end is null\n");
 
-	auto sdl = front -> addImage("res/img/sdl-logo.webp");
-	sdl -> setDst(
+	else
 	{
-		(APP_W - (sdl -> getDst()).w) / 2,
-		(APP_H - (sdl -> getDst()).h) / 2,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+		// Front
+		auto welc = front -> addText("Welcome to the demo", "res/fonts/comic-sans-ms.ttf", 90, {200, 200, 200, 255});
+		if(welc != nullptr)
+		{
+			welc -> setDst(
+			{
+				(APP_W - (welc -> getDst()).w) / 2,
+				0,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
 
-	auto next = front -> addText("Right arrow: go to input test page", "res/fonts/arial.ttf", 40, {255, 255, 255, 255});
-	next -> setDst(
-	{
-		0,
-		APP_H - (next -> getDst()).h,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+		auto sdl = front -> addImage("res/img/sdl-logo.webp");
+		if(sdl != nullptr)
+		{
+			sdl -> setDst(
+			{
+				(APP_W - (sdl -> getDst()).w) / 2,
+				(APP_H - (sdl -> getDst()).h) / 2,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
 
-	auto readme = front -> addText("Don't forget to check the README.md!", "res/fonts/comic-sans-ms.ttf", 30, {255, 64, 50, 255});
-	readme -> setDst(
-	{
-		(APP_W - (readme -> getDst()).w) / 2,
-		APP_H - (readme -> getDst()).h - (next -> getDst()).h,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+		auto next = front -> addText("Right arrow: go to input test page", "res/fonts/arial.ttf", 40, {255, 255, 255, 255});
+		if(next != nullptr)
+		{
+			next -> setDst(
+			{
+				0,
+				APP_H - (next -> getDst()).h,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
 
-	// Back
-	back -> addKey(SDL_SCANCODE_RIGHT);
+		auto readme = front -> addText("Don't forget to check the README.md!", "res/fonts/comic-sans-ms.ttf", 30, {255, 64, 50, 255});
+		if(readme != nullptr && next != nullptr)
+		{
+			readme -> setDst(
+			{
+				(APP_W - (readme -> getDst()).w) / 2,
+				APP_H - (readme -> getDst()).h - (next -> getDst()).h,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
+
+		// Back
+		back -> addKey(SDL_SCANCODE_RIGHT);
+	}
 }
 
 void initInputTest(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	// Front
-	auto click = front -> addSpritesheet("res/gif/click-button.gif");
-	click -> setDst (
-	{
-		(APP_W - click -> getDst().w) / 2,
-		(APP_H - click -> getDst().h) / 4,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+	// Pointer handling
+	if(front == nullptr)
+		SDL_Log("Cannot call init function: Front-end is null\n");
+	else if(back == nullptr)
+		SDL_Log("Cannot call init function: Back-end is null\n");
 
-	auto key = front -> addSpritesheet("res/gif/key-button.gif");
-	key -> setDst (
+	else
 	{
-		(APP_W - key -> getDst().w) / 2,
-		(APP_H - key -> getDst().h) / 4 * 3,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+		// Front
+		auto click = front -> addSpritesheet("res/gif/click-button.gif");
+		if(click != nullptr)
+		{
+			click -> setDst (
+			{
+				(APP_W - click -> getDst().w) / 2,
+				(APP_H - click -> getDst().h) / 4,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
 
-	auto prev = front -> addText("Left arrow: go back to welcome page", "res/fonts/arial.ttf", 40, {255, 255, 255, 255});
-	prev -> setDst(
-	{
-		0,
-		APP_H - (prev -> getDst()).h,
-		RECT_UNCHANGED,
-		RECT_UNCHANGED
-	});
+		auto key = front -> addSpritesheet("res/gif/key-button.gif");
+		if(key != nullptr)
+		{
+			key -> setDst (
+			{
+				(APP_W - key -> getDst().w) / 2,
+				(APP_H - key -> getDst().h) / 4 * 3,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
 
-	// Back
-	back -> addClick(SDL_BUTTON_LEFT, click);
-	back -> addKey(SDL_SCANCODE_SPACE, key);
-	back -> addKey(SDL_SCANCODE_LEFT);
+		auto prev = front -> addText("Left arrow: go back to welcome page", "res/fonts/arial.ttf", 40, {255, 255, 255, 255});
+		if(prev != nullptr)
+		{
+			prev -> setDst(
+			{
+				0,
+				APP_H - (prev -> getDst()).h,
+				RECT_UNCHANGED,
+				RECT_UNCHANGED
+			});
+		}
+
+		// Back
+		if(click != nullptr)
+			back -> addClick(SDL_BUTTON_LEFT, click);
+		if(key != nullptr)
+			back -> addKey(SDL_SCANCODE_SPACE, key);
+		back -> addKey(SDL_SCANCODE_LEFT);
+	}
 }
 
 /* Handle function template
 
 void initTemplate(const std::shared_ptr<Front> front, const std::shared_ptr<Back> back)
 {
-	// Front
-	// Add rendered objects here
+	// Pointer handling
+	if(front == nullptr)
+		SDL_Log("Cannot call init function: Front-end is null\n");
+	else if(back == nullptr)
+		SDL_Log("Cannot call init function: Back-end is null\n");
 
-	// Back
-	// Add input-based objects here
+	else
+	{
+		// Front
+		// Add rendered objects here
+
+		// Back
+		// Add input-based objects here
+	}
 }
 
 */

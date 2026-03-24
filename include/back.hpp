@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "macros.hpp"
-#include "front.hpp"
+#include <common.hpp>
+#include <wrap.hpp>
+#include <front.hpp>
 
 /* Struct to handle the mouse, keyboard and
  * closing the app
@@ -21,13 +22,12 @@ typedef struct inputs
  * keyboard in its children classes
  * (Controller support might get added)
  */
-class Input
+class Input : public Instantiable
 {
 protected:
 	std::shared_ptr<Spritesheet> spritesheet;
 	bool wasPressed;
 	Input();
-	Input(const char* const path);
 	Input(const std::shared_ptr<Spritesheet> spritesheet);
 };
 
@@ -43,7 +43,6 @@ private:
 
 public:
 	Click(const Uint32 click);
-	Click(const Uint32 click, const char* const path);
 	Click(const Uint32 click, std::shared_ptr<Spritesheet> spritesheet);
 	Uint32 pressed(const inputs_t& userInputs);
 };
@@ -60,7 +59,6 @@ private:
 
 public:
 	Key(const Uint8 value);
-	Key(const Uint8 value, const char* const path);
 	Key(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet);
 	Uint8 pressed(const Uint8* keys);
 };
@@ -72,7 +70,7 @@ public:
 class Entity;
 
 /* Object that manages all of the back-end */
-class Back
+class Back : public Instantiable
 {
 private:
 	static std::shared_ptr<Back> instance;
@@ -85,10 +83,8 @@ private:
 public:
 	static std::shared_ptr<Back> getInstance();
 	void addClick(const Uint32 click);
-	void addClick(const Uint32 click, const char* const path);
 	void addClick(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet);
 	void addKey(const Uint8 value);
-	void addKey(const Uint8 value, const char* const path);
 	void addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet);
 	void addEntity(/* ... */); // Complete this to make your own Entity adder
 	bool updateEvent();

@@ -1,16 +1,16 @@
 /* Main template */
 
-#include "inits.hpp"
-#include "handles.hpp"
+#include <inits.hpp>
+#include <handles.hpp>
 
 
 int main(int argc, char** argv)
 {
-	/* Use the flags defined in 'macros.hpp' for the
+	/* Use the flags defined in 'common.hpp' for the
 	 * App constructor (INIT_SDL is ignored)
 	 */
-	std::shared_ptr<App> app = App::getInstance(INIT_IMAGE | INIT_MIXER | INIT_TTF | INIT_NET);
-	if(!(app -> readyToUse())) return 1;
+	std::shared_ptr<App> app = App::getInstance(INIT_IMAGE | INIT_NET | INIT_MIXER | INIT_TTF);
+	if(!(app -> isInstantiated())) return 1;
 	if(!(app -> initFront("Base"))) return 1;
 	if(!(app -> initBack())) return 1;
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 	{
 		nullptr, // WARNING: Do NOT remove this null pointer
 		         // or everything else will be shifted by 1
-		nullptr,
+		"res/ost/invincible.mp3",
 		nullptr
 	};
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 	 * function is the ID of the next function to call
 	 *
 	 * NOTE: Do not forget to add your own IDs to the
-	 * 'macros.hpp' header, it's the same one for an
+	 * 'common.hpp' header, it's the same one for an
 	 * init function and its corresponding handle
 	 * function, so they must have the same index.
 	 */

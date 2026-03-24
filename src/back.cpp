@@ -1,4 +1,4 @@
-#include "back.hpp"
+#include <back.hpp>
 
 
 std::shared_ptr<Back> Back::instance = nullptr;
@@ -7,47 +7,61 @@ Input::Input()
 {
 	this -> spritesheet = nullptr;
 	wasPressed = false;
-}
-
-Input::Input(const char* const path)
-{
-	if(path == nullptr)
-		SDL_Log("spritesheet path is null\n");
-	else
-		this -> spritesheet = std::shared_ptr<Spritesheet>(new Spritesheet(path));
-	wasPressed = false;
+	instantiated = true;
 }
 
 Input::Input(const std::shared_ptr<Spritesheet> spritesheet)
 {
 	if(spritesheet == nullptr)
-		SDL_Log("spritesheet is null\n");
+	{
+		SDL_Log("Cannot create Spritesheet: Spritesheet is null\n");
+		instantiated = false;
+	}
 	else
+	{
 		this -> spritesheet = std::shared_ptr<Spritesheet>(spritesheet);
-	wasPressed = false;
+		wasPressed = false;
+		instantiated = true;
+	}
 }
 
 
 
 Click::Click(const Uint32 click) : Input()
 {
-	this -> click = click;
-	wasHovered = false;
-}
-
-Click::Click(const Uint32 click, const char* const path) : Input (path)
-{
-	this -> click = click;
-	this -> spritesheet = std::make_shared<Spritesheet>(path);
-	wasHovered = false;
+	if(click == 0)
+	{
+		SDL_Log("Cannot create Click: Invalid click value\n");
+		instantiated = false;
+	}
+	else
+	{
+		this -> click = click;
+		wasHovered = false;
+		instantiated = true;
+	}
 }
 
 Click::Click(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet)
 : Input(spritesheet)
 {
-	this -> click = click;
-	this -> spritesheet = spritesheet;
-	wasHovered = false;
+	if(click == 0)
+	{
+		SDL_Log("Cannot create Click: Invalid click value\n");
+		instantiated = false;
+	}
+	else if(spritesheet == nullptr)
+	{
+		SDL_Log("Cannot create Click: Spritesheet is null\n");
+		instantiated = false;
+	}
+	else
+	{
+		this -> click = click;
+		this -> spritesheet = spritesheet;
+		wasHovered = false;
+		instantiated = true;
+	}
 }
 
 Uint32 Click::pressed(const inputs_t& userInputs)
@@ -139,43 +153,66 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 
 Key::Key(const Uint8 value) : Input()
 {
-	this -> value = value;
-}
-
-Key::Key(const Uint8 value, const char* const path) : Input (path)
-{
-	this -> value = value;
-	this -> spritesheet = std::make_shared<Spritesheet>(path);
+	if(value == 0)
+	{
+		SDL_Log("Cannot create Key: Invalid key value\n");
+		instantiated = false;
+	}
+	else
+	{
+		this -> value = value;
+		instantiated = true;
+	}
 }
 
 Key::Key(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet)
 : Input(spritesheet)
 {
-	this -> value = value;
-	this -> spritesheet = spritesheet;
+	if(value == 0)
+	{
+		SDL_Log("Cannot create Key: Invalid key value\n");
+		instantiated = false;
+	}
+	else if(spritesheet == nullptr)
+	{
+		SDL_Log("Cannot create Key: Spritesheet is null\n");
+		instantiated = false;
+	}
+	else
+	{
+		this -> value = value;
+		this -> spritesheet = spritesheet;
+		instantiated = true;
+
+	}
 }
 
 Uint8 Key::pressed(const Uint8* keys)
 {
-	if(keys[value])
-	{
-		if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_PRESSED)
-			spritesheet -> setIndex(KEY_PRESSED);
-
-		wasPressed = true;
-	}
+	if(keys == nullptr)
+		SDL_Log("Cannot update Key: Keystates array is null\n");
 	else
 	{
-		if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_DEFAULT)
-			spritesheet -> setIndex(KEY_DEFAULT);
-
-		if(wasPressed)
+		if(keys[value])
 		{
-			wasPressed = false; // This line is needed to activate the button only once per click
-			return value;
-		}
+			if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_PRESSED)
+				spritesheet -> setIndex(KEY_PRESSED);
 
-		wasPressed = false;
+			wasPressed = true;
+		}
+		else
+		{
+			if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_DEFAULT)
+				spritesheet -> setIndex(KEY_DEFAULT);
+
+			if(wasPressed)
+			{
+				wasPressed = false; // This line is needed to activate the button only once per click
+				return value;
+			}
+
+			wasPressed = false;
+		}
 	}
 
 	return 0;
@@ -183,7 +220,10 @@ Uint8 Key::pressed(const Uint8* keys)
 
 
 
-Back::Back() {}
+Back::Back()
+{
+	instantiated = true;
+}
 
 /* Singleton: for one App there should only be
  * one back-end object
@@ -197,44 +237,54 @@ std::shared_ptr<Back> Back::getInstance()
 
 void Back::addKey(const Uint8 value)
 {
-	keys.push_back(std::shared_ptr<Key> (new Key(value)));
-}
-
-void Back::addKey(const Uint8 value, const char* const path)
-{
-	if(path == nullptr)
-		SDL_Log("spritesheet path is null\n");
+	if(value == 0)
+		SDL_Log("Cannot add Key: Invalid key value\n");
 	else
-		keys.push_back(std::shared_ptr<Key> (new Key(value, path)));
+	{
+		std::shared_ptr<Key> key = std::make_shared<Key>(value);
+		if(key -> isInstantiated())
+			keys.push_back(key);
+	}
 }
 
 void Back::addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet)
 {
-	if(spritesheet == nullptr)
-		SDL_Log("spritesheet is null\n");
+	if(value == 0)
+		SDL_Log("Cannot add Key: Invalid key value\n");
+	else if(spritesheet == nullptr)
+		SDL_Log("Cannot add Key: spritesheet is null\n");
 	else
-		keys.push_back(std::shared_ptr<Key> (new Key(value, spritesheet)));
+	{
+		std::shared_ptr<Key> key = std::make_shared<Key>(value, spritesheet);
+		if(key -> isInstantiated())
+			keys.push_back(key);
+	}
 }
 
 void Back::addClick(const Uint32 click)
 {
-	clicks.push_back(std::shared_ptr<Click> (new Click(click)));
-}
-
-void Back::addClick(const Uint32 click, const char* const path)
-{
-	if(path == nullptr)
-		SDL_Log("spritesheet path is null\n");
+	if(click == 0)
+		SDL_Log("Cannot add Click: Invalid click value\n");
 	else
-		clicks.push_back(std::shared_ptr<Click> (new Click(click, path)));
+	{
+		std::shared_ptr<Click> clk = std::make_shared<Click>(click);
+		if(clk -> isInstantiated())
+			clicks.push_back(clk);
+	}
 }
 
 void Back::addClick(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet)
 {
-	if(spritesheet == nullptr)
-		SDL_Log("spritesheet is null\n");
+	if(click == 0)
+		SDL_Log("Cannot add Click: Invalid click value\n");
+	else if(spritesheet == nullptr)
+		SDL_Log("Cannot add Click: Spritesheet is null\n");
 	else
-		clicks.push_back(std::shared_ptr<Click> (new Click(click, spritesheet)));
+	{
+		std::shared_ptr<Click> clk = std::make_shared<Click>(click, spritesheet);
+		if(clk -> isInstantiated())
+			clicks.push_back(clk);
+	}
 }
 
 /* Write your own Entity adder here */
@@ -298,12 +348,25 @@ void Back::clearEntities()
 Sint32 Back::update(const std::function<Sint32(std::shared_ptr<Front>, std::shared_ptr<Back>)> handle,
 					const std::shared_ptr<Front> front)
 {
-	if(!updateEvent())
+	if(handle == nullptr)
+	{
+		SDL_Log("Cannot update back-end: Handle function is null\n");
 		return EXIT;
+	}
+	else if(front == nullptr)
+	{
+		SDL_Log("Cannot update back-end: Front-end is null\n");
+		return EXIT;
+	}
 	else
 	{
-		updateKeys();
-		updateMouse();
-		return handle(front, instance);
+		if(!updateEvent())
+			return EXIT;
+		else
+		{
+			updateKeys();
+			updateMouse();
+			return handle(front, instance);
+		}
 	}
 }
