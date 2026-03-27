@@ -17,18 +17,19 @@ Navigate to the top of this page, click the green `<> Code` button, then click "
 
 # Configuration
 
-### Windows
+## Windows
 Everything you need should be in the `windows.tar.gz` archive. Just extract its content (you may have to do it twice) and you're good to go.
 However, you need Git's Bash interface to be able to build the project. Install it by clicking [here](https://gitforwindows.org/).
 
-### Linux
+## Linux
 You need to install GCC, Make and all of the SDL2 libraries in order to run the project. Use the appropriate command for your distro.
 - Debian or Debian-based : `sudo apt install gcc make libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-net-dev libsdl2-ttf-dev`
 - Fedora or Fedora-based : `sudo dnf install gcc make SDL2-devel SDL2_image-devel SDL2_mixer-devel SDL2_ttf-devel SDL2_net-devel`
 - Arch or Arch-based : `sudo pacman -S gcc make sdl2 sdl2_image sdl2_mixer sdl2_net sdl2_ttf`
+
 If your distro isn't listed above, you can always install SDL2 by following [these instructions](https://wiki.libsdl.org/SDL2/Installation).
 
-### MacOS
+## MacOS
 Paste this into your terminal : 
 ```
 xcode-select --install
