@@ -1,73 +1,109 @@
 #include <back.hpp>
 
 
+std::shared_ptr<inputs_t> UserInputs::userInputs = nullptr;
+
 std::shared_ptr<Back> Back::instance = nullptr;
 
-Input::Input()
+SpritesAddon::SpritesAddon() {}
+
+void SpritesAddon::setSpritesheet(const std::shared_ptr<Spritesheet> newSpritesheet)
 {
-	this -> spritesheet = nullptr;
+	if(newSpritesheet == nullptr)
+		SDL_Log("Cannot set new Spritesheet: Spritesheet is null\n");
+	else
+		spritesheet = newSpritesheet;
+}
+
+
+
+SfxAddon::SfxAddon() : chunk(nullptr) {}
+
+void SfxAddon::setSfx(const std::shared_ptr<Chunk> newChunk)
+{
+	if(newChunk == nullptr)
+		SDL_Log("Cannot set new Sfx: Chunk is null\n");
+	else
+		chunk = newChunk;
+}
+
+
+
+template<typename... Addons>
+Input<Addons...>::Input()
+{
 	wasPressed = false;
 	instantiated = true;
 }
 
-Input::Input(const std::shared_ptr<Spritesheet> spritesheet)
+
+
+const std::shared_ptr<inputs_t> UserInputs::get()
 {
-	if(spritesheet == nullptr)
-	{
-		SDL_Log("Cannot create Spritesheet: Spritesheet is null\n");
-		instantiated = false;
-	}
-	else
-	{
-		this -> spritesheet = std::shared_ptr<Spritesheet>(spritesheet);
-		wasPressed = false;
-		instantiated = true;
-	}
+	return userInputs;
 }
 
+void UserInputs::set(std::shared_ptr<inputs_t> newUserInputs)
+{
+	userInputs = newUserInputs;
+}
 
-
-Click::Click(const Uint32 click) : Input()
+template<typename... Addons>
+Click<Addons...>::Click(const Uint32 click) : Input<Addons...>()
 {
 	if(click == 0)
-	{
 		SDL_Log("Cannot create Click: Invalid click value\n");
-		instantiated = false;
-	}
 	else
 	{
 		this -> click = click;
 		wasHovered = false;
-		instantiated = true;
+		this -> instantiated = true;
 	}
 }
 
-Click::Click(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet)
-: Input(spritesheet)
+template<typename... Addons>
+Uint32 Click<Addons...>::pressed()
 {
-	if(click == 0)
-	{
-		SDL_Log("Cannot create Click: Invalid click value\n");
-		instantiated = false;
-	}
-	else if(spritesheet == nullptr)
-	{
-		SDL_Log("Cannot create Click: Spritesheet is null\n");
-		instantiated = false;
-	}
-	else
-	{
-		this -> click = click;
-		this -> spritesheet = spritesheet;
-		wasHovered = false;
-		instantiated = true;
-	}
-}
+	/* Manipulation of the spritesheet and/or the SFX
+	 * only if it exists
+	 */
+	std::shared_ptr<Spritesheet> spritesheet = nullptr;
+	std::shared_ptr<Chunk> chunk = nullptr;
 
-Uint32 Click::pressed(const inputs_t& userInputs)
-{
+	if constexpr(sizeof... (Addons) == 2)
+	{
+		spritesheet = this -> spritesheet;
+		chunk = this -> chunk;
+	}
+	else if constexpr(sizeof... (Addons) == 1)
+	{
+		if constexpr(std::is_same_v<std::tuple_element_t<0, std::tuple<Addons...>>, SpritesAddon>)
+			spritesheet = this -> spritesheet;
+		else
+			chunk = this -> chunk;
+	}
+
+	/* Boolean used for playing the SFX only once */
+	static bool wasPlayed = false;
+
 	if(spritesheet == nullptr)
-		return userInputs.mouseClicks & SDL_BUTTON(click);
+	{
+		Uint32 isClicked = UserInputs::get() -> mouseClicks & SDL_BUTTON(click);
+		if(chunk != nullptr)
+		{
+			if(isClicked && !wasPlayed)
+			{
+				if(chunk -> isPlaying())
+					chunk -> stop();
+				chunk -> play();
+				wasPlayed = true;
+			}
+			else if(!isClicked)
+				wasPlayed = false;
+		}
+
+		return isClicked;
+	}
 	else
 	{
 		/* Responsive mouse position capture */
@@ -83,12 +119,12 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 		scaleX /= windowW;
 		scaleY /= windowH;
 
-		mouseX = scaleX * userInputs.mouseX;
-		mouseY = scaleY * userInputs.mouseY;
+		mouseX = scaleX * UserInputs::get() -> mouseX;
+		mouseY = scaleY * UserInputs::get() -> mouseY;
 
 		/* Processing mouse position and click */
 		SDL_Rect dst = spritesheet -> getDst();
-		if(userInputs.mouseClicks & SDL_BUTTON(click))
+		if((UserInputs::get() -> mouseClicks) & SDL_BUTTON(click))
 		{
 			/* Added 'SDL_GetMouseFocus() == window' for when
 			 * the clickable button is at the corner of the
@@ -105,14 +141,22 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 			{
 				if(spritesheet -> getIndex() != CLICK_PRESSED)
 					spritesheet -> setIndex(CLICK_PRESSED);
-				wasPressed = true;
+				if(chunk != nullptr && !wasPlayed)
+				{
+					if(chunk -> isPlaying())
+						chunk -> stop();
+					chunk -> play();
+					wasPlayed = true;
+				}
+
+				this -> wasPressed = true;
 			}
 			else
 			{
 				if(spritesheet -> getIndex() != CLICK_DEFAULT)
 					spritesheet -> setIndex(CLICK_DEFAULT);
 
-				wasPressed = false;
+				this -> wasPressed = false;
 				wasHovered = false;
 			}
 		}
@@ -127,9 +171,11 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 				if(spritesheet -> getIndex() != CLICK_HOVERED)
 					spritesheet -> setIndex(CLICK_HOVERED);
 
-				if(wasPressed)
+				if(this -> wasPressed)
 				{
-					wasPressed = false; // This line is needed to activate the button only once per click
+					if(chunk != nullptr)
+						wasPlayed = false;
+					this -> wasPressed = false; // This line is needed to activate the button only once per click
 					return click;
 				}
 				else
@@ -139,10 +185,13 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 			{
 				if(spritesheet -> getIndex() != CLICK_DEFAULT)
 					spritesheet -> setIndex(CLICK_DEFAULT);
+				if(chunk != nullptr)
+					wasPlayed = false;
+
 				wasHovered = false;
 			}
 
-			wasPressed = false;
+			this -> wasPressed = false;
 		}
 
 		return 0;
@@ -151,67 +200,98 @@ Uint32 Click::pressed(const inputs_t& userInputs)
 
 
 
-Key::Key(const Uint8 value) : Input()
+template<typename... Addons>
+Key<Addons...>::Key(const Uint8 value) : Input<Addons...>()
 {
 	if(value == 0)
-	{
 		SDL_Log("Cannot create Key: Invalid key value\n");
-		instantiated = false;
-	}
 	else
 	{
 		this -> value = value;
-		instantiated = true;
+		this -> instantiated = true;
 	}
 }
 
-Key::Key(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet)
-: Input(spritesheet)
+template<typename... Addons>
+Uint32 Key<Addons...>::pressed()
 {
-	if(value == 0)
-	{
-		SDL_Log("Cannot create Key: Invalid key value\n");
-		instantiated = false;
-	}
-	else if(spritesheet == nullptr)
-	{
-		SDL_Log("Cannot create Key: Spritesheet is null\n");
-		instantiated = false;
-	}
-	else
-	{
-		this -> value = value;
-		this -> spritesheet = spritesheet;
-		instantiated = true;
-
-	}
-}
-
-Uint8 Key::pressed(const Uint8* keys)
-{
+	static const Uint8* keys = UserInputs::get() -> keys;
 	if(keys == nullptr)
 		SDL_Log("Cannot update Key: Keystates array is null\n");
 	else
 	{
-		if(keys[value])
+		/* Manipulation of the spritesheet and/or the SFX
+		 * only if it exists
+		 */
+		std::shared_ptr<Spritesheet> spritesheet = nullptr;
+		std::shared_ptr<Chunk> chunk = nullptr;
+		if constexpr(sizeof... (Addons) == 2)
 		{
-			if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_PRESSED)
-				spritesheet -> setIndex(KEY_PRESSED);
+			spritesheet = this -> spritesheet;
+			chunk = this -> chunk;
+		}
+		else if constexpr(sizeof... (Addons) == 1)
+		{
+			if constexpr(std::is_same_v<std::tuple_element_t<0, std::tuple<Addons...>>, SpritesAddon>)
+				spritesheet = this -> spritesheet;
+			else
+				chunk = this -> chunk;
+		}
 
-			wasPressed = true;
+		/* Boolean used for playing the SFX only once */
+		static bool wasPlayed = false;
+
+		if(spritesheet == nullptr)
+		{
+			if(keys[value])
+			{
+				if(chunk != nullptr && !wasPlayed)
+				{
+					if(chunk -> isPlaying())
+						chunk -> stop();
+					chunk -> play();
+					wasPlayed = true;
+				}
+				return value;
+			}
+			else
+			{
+				if(chunk != nullptr)
+					wasPlayed = false;
+				return 0;
+			}
 		}
 		else
 		{
-			if(spritesheet != nullptr && spritesheet -> getIndex() != KEY_DEFAULT)
-				spritesheet -> setIndex(KEY_DEFAULT);
-
-			if(wasPressed)
+			if(keys[value])
 			{
-				wasPressed = false; // This line is needed to activate the button only once per click
-				return value;
-			}
+				if(spritesheet -> getIndex() != KEY_PRESSED)
+					spritesheet -> setIndex(KEY_PRESSED);
+				if(chunk != nullptr && !wasPlayed)
+				{
+					if(chunk -> isPlaying())
+						chunk -> stop();
+					chunk -> play();
+					wasPlayed = true;
+				}
 
-			wasPressed = false;
+				this -> wasPressed = true;
+			}
+			else
+			{
+				if(spritesheet -> getIndex() != KEY_DEFAULT)
+					spritesheet -> setIndex(KEY_DEFAULT);
+
+				if(this -> wasPressed)
+				{
+					if(chunk != nullptr)
+						wasPlayed = false;
+					this -> wasPressed = false; // This line is needed to activate the button only once per click
+					return value;
+				}
+
+				this -> wasPressed = false;
+			}
 		}
 	}
 
@@ -223,6 +303,7 @@ Uint8 Key::pressed(const Uint8* keys)
 Back::Back()
 {
 	instantiated = true;
+	UserInputs::set(std::make_shared<inputs_t>());
 }
 
 /* Singleton: for one App there should only be
@@ -241,7 +322,7 @@ void Back::addKey(const Uint8 value)
 		SDL_Log("Cannot add Key: Invalid key value\n");
 	else
 	{
-		std::shared_ptr<Key> key = std::make_shared<Key>(value);
+		std::shared_ptr<Key<>> key = std::make_shared<Key<>>(value);
 		if(key -> isInstantiated())
 			keys.push_back(key);
 	}
@@ -252,12 +333,52 @@ void Back::addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesh
 	if(value == 0)
 		SDL_Log("Cannot add Key: Invalid key value\n");
 	else if(spritesheet == nullptr)
-		SDL_Log("Cannot add Key: spritesheet is null\n");
+		SDL_Log("Cannot add Key: Spritesheet is null\n");
 	else
 	{
-		std::shared_ptr<Key> key = std::make_shared<Key>(value, spritesheet);
+		std::shared_ptr<Key<SpritesAddon>> key = std::make_shared<Key<SpritesAddon>>(value);
 		if(key -> isInstantiated())
+		{
+			key -> setSpritesheet(spritesheet);
 			keys.push_back(key);
+		}
+	}
+}
+
+void Back::addKey(const Uint8 value, const std::shared_ptr<Chunk> chunk)
+{
+	if(value == 0)
+		SDL_Log("Cannot add Key: Invalid key value\n");
+	else if(chunk == nullptr)
+		SDL_Log("Cannot add Key: Chunk is null\n");
+	else
+	{
+		std::shared_ptr<Key<SfxAddon>> key = std::make_shared<Key<SfxAddon>>(value);
+		if(key -> isInstantiated())
+		{
+			key -> setSfx(chunk);
+			keys.push_back(key);
+		}
+	}
+}
+
+void Back::addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet, const std::shared_ptr<Chunk> chunk)
+{
+	if(value == 0)
+		SDL_Log("Cannot add Key: Invalid key value\n");
+	else if(spritesheet == nullptr)
+		SDL_Log("Cannot add Key: Spritesheet is null\n");
+	else if(chunk == nullptr)
+		SDL_Log("Cannot add Key: Chunk is null\n");
+	else
+	{
+		std::shared_ptr<Key<SpritesAddon, SfxAddon>> key = std::make_shared<Key<SpritesAddon, SfxAddon>>(value);
+		if(key -> isInstantiated())
+		{
+			key -> setSpritesheet(spritesheet);
+			key -> setSfx(chunk);
+			keys.push_back(key);
+		}
 	}
 }
 
@@ -267,7 +388,7 @@ void Back::addClick(const Uint32 click)
 		SDL_Log("Cannot add Click: Invalid click value\n");
 	else
 	{
-		std::shared_ptr<Click> clk = std::make_shared<Click>(click);
+		std::shared_ptr<Click<>> clk = std::make_shared<Click<>>(click);
 		if(clk -> isInstantiated())
 			clicks.push_back(clk);
 	}
@@ -281,9 +402,49 @@ void Back::addClick(const Uint32 click, const std::shared_ptr<Spritesheet> sprit
 		SDL_Log("Cannot add Click: Spritesheet is null\n");
 	else
 	{
-		std::shared_ptr<Click> clk = std::make_shared<Click>(click, spritesheet);
+		std::shared_ptr<Click<SpritesAddon>> clk = std::make_shared<Click<SpritesAddon>>(click);
 		if(clk -> isInstantiated())
+		{
+			clk -> setSpritesheet(spritesheet);
 			clicks.push_back(clk);
+		}
+	}
+}
+
+void Back::addClick(const Uint32 click, const std::shared_ptr<Chunk> chunk)
+{
+	if(click == 0)
+		SDL_Log("Cannot add Click: Invalid click value\n");
+	else if(chunk == nullptr)
+		SDL_Log("Cannot add Click: Chunk is null\n");
+	else
+	{
+		std::shared_ptr<Click<SfxAddon>> clk = std::make_shared<Click<SfxAddon>>(click);
+		if(clk -> isInstantiated())
+		{
+			clk -> setSfx(chunk);
+			clicks.push_back(clk);
+		}
+	}
+}
+
+void Back::addClick(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet, const std::shared_ptr<Chunk> chunk)
+{
+	if(click == 0)
+		SDL_Log("Cannot add Click: Invalid click value\n");
+	else if(spritesheet == nullptr)
+		SDL_Log("Cannot add Click: Spritesheet is null\n");
+	else if(chunk == nullptr)
+		SDL_Log("Cannot add Click: Chunk is null\n");
+	else
+	{
+		std::shared_ptr<Click<SpritesAddon, SfxAddon>> clk = std::make_shared<Click<SpritesAddon, SfxAddon>>(click);
+		if(clk -> isInstantiated())
+		{
+			clk -> setSpritesheet(spritesheet);
+			clk -> setSfx(chunk);
+			clicks.push_back(clk);
+		}
 	}
 }
 
@@ -297,35 +458,30 @@ bool Back::updateEvent()
 {
 	bool shouldQuit = true;
 
-	while(SDL_PollEvent(&(userInputs.event)))
-		shouldQuit = userInputs.event.type != SDL_QUIT;
+	while(SDL_PollEvent(&(UserInputs::get() -> event)))
+		shouldQuit = UserInputs::get() -> event.type != SDL_QUIT;
 
 	return shouldQuit;
 }
 
 void Back::updateKeys()
 {
-	userInputs.keys = SDL_GetKeyboardState(nullptr);
+	UserInputs::get() -> keys = SDL_GetKeyboardState(nullptr);
 }
 
 void Back::updateMouse()
 {
-	userInputs.mouseClicks = SDL_GetMouseState(&(userInputs.mouseX), &(userInputs.mouseY));
+	UserInputs::get() -> mouseClicks = SDL_GetMouseState(&(UserInputs::get() -> mouseX), &(UserInputs::get() -> mouseY));
 }
 
-const std::vector<std::shared_ptr<Key>>& Back::getKeys() const
+const std::vector<std::shared_ptr<Pressable>>& Back::getKeys() const
 {
 	return keys;
 }
 
-const std::vector<std::shared_ptr<Click>>& Back::getClicks() const
+const std::vector<std::shared_ptr<Pressable>>& Back::getClicks() const
 {
 	return clicks;
-}
-
-const inputs_t& Back::getUserInputs() const
-{
-	return userInputs;
 }
 
 void Back::clearInputs()
@@ -346,7 +502,7 @@ void Back::clearEntities()
  * other choice to make it work
  */
 Sint32 Back::update(const std::function<Sint32(std::shared_ptr<Front>, std::shared_ptr<Back>)> handle,
-					const std::shared_ptr<Front> front)
+                    const std::shared_ptr<Front> front)
 {
 	if(handle == nullptr)
 	{

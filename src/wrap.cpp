@@ -5,6 +5,8 @@ SDL_Renderer* Renderer::renderer = nullptr;
 Mix_Music* Music::music = nullptr;
 std::shared_ptr<Music> Music::instance = nullptr;
 
+Instantiable::Instantiable() : instantiated(false) {}
+
 bool Instantiable::isInstantiated()
 {
 	return instantiated;
@@ -101,7 +103,7 @@ bool Audio::open()
 	}
 	else
 	{
-		if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) != 0)
+		if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, AUDIO_CHANNELS, 2048) != 0)
 		{
 			SDL_Log("%s\n", Mix_GetError());
 			return false;
@@ -130,7 +132,7 @@ bool Audio::open(const char* const device, int allowChanges)
 	}
 	else
 	{
-		if(Mix_OpenAudioDevice(44100, MIX_DEFAULT_FORMAT, 2, 2048, device, allowChanges) != 0)
+		if(Mix_OpenAudioDevice(44100, MIX_DEFAULT_FORMAT, AUDIO_CHANNELS, 2048, device, allowChanges) != 0)
 		{
 			SDL_Log("%s\n", Mix_GetError());
 			return false;
@@ -165,23 +167,14 @@ void Mix::setLoops(int newLoops)
 Music::Music(const char* const path)
 {
 	if(path == nullptr)
-	{
 		SDL_Log("Cannot open music file: Music path is null\n");
-		instantiated = false;
-	}
 	else if(!(init_flags & INIT_MIXER))
-	{
 		SDL_Log("Cannot open music file '%s': SDL2_mixer is not initialized\n", path);
-		instantiated = false;
-	}
 	else
 	{
 		music = Mix_LoadMUS(path);
 		if(music == nullptr)
-		{
 			SDL_Log("%s\n", Mix_GetError());
-			instantiated = false;
-		}
 		else
 			instantiated = true;
 	}
@@ -275,90 +268,88 @@ void Music::rewind()
 /* Must specify in what channel the SFX must be
  * played
  */
-Sfx::Sfx(const char* const path, int channel)
+
+Chunk::Chunk(const char* const path, int channel)
 {
 	if(path == nullptr)
-	{
-		SDL_Log("Cannot open SFX file: SFX path is null\n");
-		chunk = nullptr;
-		instantiated = false;
-	}
+		SDL_Log("Cannot create Chunk: SFX path is null\n");
+	else if(!(init_flags & INIT_MIXER))
+		SDL_Log("Cannot create Chunk '%s': SDL2_mixer is not initialized\n", path);
+	else if(channel >= AUDIO_CHANNELS)
+		SDL_Log("Cannot create Chunk '%s': Invalid channel (got: %d, max: %d)\n", path, channel, AUDIO_CHANNELS);
 	else
 	{
 		chunk = Mix_LoadWAV(path);
 		if(chunk == nullptr)
-		{
 			SDL_Log("%s\n", Mix_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			this -> channel = channel;
+			loops = 0;
 			instantiated = true;
 		}
 	}
 }
 
-Sfx::~Sfx()
+Chunk::~Chunk()
 {
-	if(chunk != nullptr)
-		Mix_FreeChunk(chunk);
-}
-
-/* Volume getter and setter */
-int Sfx::getVolume()
-{
-	return Mix_VolumeChunk(chunk, -1);
-}
-
-void Sfx::setVolume(int newVolume)
-{
-	Mix_VolumeChunk(chunk, newVolume);
+	Mix_FreeChunk(chunk);
 }
 
 /* Channel getter and setter */
-int Sfx::getChannel()
+int Chunk::getChannel()
 {
 	return channel;
 }
 
-void Sfx::setChannel(int newChannel)
+void Chunk::setChannel(int newChannel)
 {
 	channel = newChannel;
 }
 
+/* Volume getter and setter */
+int Chunk::getVolume()
+{
+	return Mix_VolumeChunk(chunk, -1);
+}
+
+void Chunk::setVolume(int newVolume)
+{
+	Mix_VolumeChunk(chunk, newVolume);
+}
+
 /* SFX only plays when this is called */
-bool Sfx::play()
+bool Chunk::play()
 {
 	return Mix_PlayChannel(channel, chunk, loops) == 0;
 }
 
 /* Pause SFX without completely stopping it */
-void Sfx::pause()
+void Chunk::pause()
 {
 	Mix_Pause(channel);
 }
 
 /* Continue to play, only after pausing */
-void Sfx::resume()
+void Chunk::resume()
 {
 	Mix_Resume(channel);
 }
 
 /* Stop playing SFX, cannot be resumed */
-void Sfx::stop()
+void Chunk::stop()
 {
 	Mix_HaltChannel(channel);
 }
 
 /* Returns true if SFX is playing */
-bool Sfx::isPlaying()
+bool Chunk::isPlaying()
 {
 	return Mix_Playing(channel);
 }
 
 /* Returns true if SFX is paused */
-bool Sfx::isPaused()
+bool Chunk::isPaused()
 {
 	return Mix_Paused(channel);
 }

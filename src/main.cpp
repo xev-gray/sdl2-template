@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 	/* Use the flags defined in 'common.hpp' for the
 	 * App constructor (INIT_SDL is ignored)
 	 */
-	std::shared_ptr<App> app = App::getInstance(INIT_IMAGE | INIT_NET | INIT_MIXER | INIT_TTF);
+	std::shared_ptr<App> app = App::getInstance(INIT_IMAGE | INIT_MIXER | INIT_NET | INIT_TTF);
 	if(!(app -> isInstantiated())) return 1;
 	if(!(app -> initFront("Base"))) return 1;
 	if(!(app -> initBack())) return 1;
@@ -37,9 +37,11 @@ int main(int argc, char** argv)
 	};
 
 	/* Vector used to dynamically choose the
-	 * right BGM (BackGround Music)
+	 * right background music
+	 * NOTE: You can safely remove this vector
+	 * if your app doesn't need music.
 	 */
-	const std::vector<const char*> bgms =
+	const std::vector<const char*> muspaths =
 	{
 		nullptr, // WARNING: Do NOT remove this null pointer
 		         // or everything else will be shifted by 1
@@ -59,7 +61,7 @@ int main(int argc, char** argv)
 	 * function, so they must have the same index.
 	 */
 	while(select != EXIT)
-		select = app -> run(inits[select], handles[select], bgms[select]);
+		select = app -> run(inits[select], handles[select], muspaths[select]);
 
 	return 0;
 }

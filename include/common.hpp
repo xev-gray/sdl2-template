@@ -14,7 +14,11 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <variant>
 #include <vector>
+
+/* */
+#define AUDIO_CHANNELS 2
 
 /* Value for unchanging rect width/height */
 #define RECT_UNCHANGED 0

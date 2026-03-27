@@ -25,5 +25,5 @@ public:
 	bool initBack();
 	Sint32 run(const std::function<void(std::shared_ptr<Front>, std::shared_ptr<Back>)>,
                const std::function<Sint32(std::shared_ptr<Front>, std::shared_ptr<Back>)>,
-			   const char* const bgm = nullptr);
+			   const char* const muspath = nullptr);
 };

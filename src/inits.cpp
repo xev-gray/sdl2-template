@@ -129,10 +129,13 @@ void initInputTest(const std::shared_ptr<Front> front, const std::shared_ptr<Bac
 		}
 
 		// Back
-		if(click != nullptr)
-			back -> addClick(SDL_BUTTON_LEFT, click);
-		if(key != nullptr)
-			back -> addKey(SDL_SCANCODE_SPACE, key);
+		auto clickSfx = std::make_shared<Chunk>("res/sfx/click-sound.wav", 0);
+		auto keySfx = std::make_shared<Chunk>("res/sfx/key-sound.wav", 1);
+
+		if(click != nullptr && clickSfx -> isInstantiated())
+			back -> addClick(SDL_BUTTON_LEFT, click, clickSfx);
+		if(key != nullptr && keySfx -> isInstantiated())
+			back -> addKey(SDL_SCANCODE_SPACE, key, keySfx);
 		back -> addKey(SDL_SCANCODE_LEFT);
 	}
 }

@@ -20,7 +20,6 @@ App::App()
 	{
 		init_flags = INIT_FAIL;
 		SDL_Log("%s\n", SDL_GetError());
-		instantiated = false;
 	}
 	else
 		instantiated = true;
@@ -51,7 +50,6 @@ App::App(const Uint8 flags)
 		{
 			init_flags = INIT_FAIL;
 			SDL_Log("%s\n", SDL_GetError());
-			instantiated = false;
 		}
 
 		if(flags & INIT_IMAGE)
@@ -68,7 +66,6 @@ App::App(const Uint8 flags)
 			{
 				init_flags = INIT_FAIL;
 				SDL_Log("%s\n", IMG_GetError());
-				instantiated = false;
 			}
 		}
 
@@ -76,7 +73,6 @@ App::App(const Uint8 flags)
 		{
 			init_flags = INIT_FAIL;
 			SDL_Log("%s\n", TTF_GetError());
-			instantiated = false;
 		}
 
 		if(flags & INIT_MIXER)
@@ -94,7 +90,6 @@ App::App(const Uint8 flags)
 			{
 				init_flags = INIT_FAIL;
 				SDL_Log("%s\n", Mix_GetError());
-				instantiated = false;
 			}
 		}
 
@@ -146,7 +141,7 @@ bool App::initFront(const char* const windowName)
 {
 	if(windowName == nullptr)
 	{
-		SDL_Log("Cannot create window: Window name is null\n");
+		SDL_Log("Cannot create Front: Window name is null\n");
 		return false;
 	}
 	front = Front::getInstance(windowName);
@@ -159,26 +154,22 @@ bool App::initBack()
 	return back -> isInstantiated();
 }
 
-/* TODO: Add a loading screen before init calls */
 Sint32 App::run(const std::function<void(std::shared_ptr<Front>, std::shared_ptr<Back>)> init,
 				const std::function<Sint32(std::shared_ptr<Front>, std::shared_ptr<Back>)> handle,
-				const char* const bgm)
+				const char* const muspath)
 {
+	bool audioOpened = Audio::open();
 	init(front, back);
 
 	Sint32 result = PASS;
 	bool works = true;
 
 	std::shared_ptr<Music> music = nullptr;
-	if(init_flags & INIT_MIXER)
+	if(muspath != nullptr && audioOpened)
 	{
-		Audio::open();
-		if(bgm != nullptr)
-		{
-			music = Music::getInstance(bgm);
-			if(music != nullptr && music -> isInstantiated())
-				music -> play();
-		}
+		music = Music::getInstance(muspath);
+		if(music != nullptr && music -> isInstantiated())
+			music -> play();
 	}
 
 	while(works && result == PASS)

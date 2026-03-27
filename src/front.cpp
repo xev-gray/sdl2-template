@@ -149,10 +149,7 @@ Canvas::Canvas()
 {
 	texture = SDL_CreateTexture(Renderer::get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, APP_W, APP_H);
 	if(texture == nullptr)
-	{
 		SDL_Log("%s\n", SDL_GetError());
-		instantiated = false;
-	}
 	else
 	{
 		src = std::make_unique<Rect>(0, 0, APP_W, APP_H);
@@ -220,40 +217,25 @@ bool Canvas::draw()
 Image::Image(const char* const path)
 {
 	if(path == nullptr)
-	{
 		SDL_Log("Cannot create Image: Image path is null\n");
-		instantiated = false;
-	}
 	else if(!(init_flags & INIT_IMAGE))
-	{
 		SDL_Log("Cannot create Image '%s': SDL2_image is not initialized\n", path);
-		instantiated = false;
-	}
 	else
 	{
 		SDL_Surface* surface = IMG_Load(path);
 		if(surface == nullptr)
-		{
 			SDL_Log("%s\n", IMG_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			texture = SDL_CreateTextureFromSurface(Renderer::get(), surface);
 			SDL_FreeSurface(surface);
 			if(texture == nullptr)
-			{
 				SDL_Log("%s\n", SDL_GetError());
-				instantiated = false;
-			}
 			else
 			{
 				int w, h;
 				if(SDL_QueryTexture(texture, nullptr, nullptr, &w, &h) != 0)
-				{
 					SDL_Log("%s\n", SDL_GetError());
-					instantiated = false;
-				}
 				else
 				{
 					SDL_Rect rect = {0, 0, w, h};
@@ -271,59 +253,35 @@ Image::Image(const char* const path)
 Text::Text(const char* const text, const char* const fontPath, const short size, const SDL_Color color)
 {
 	if(text == nullptr)
-	{
 		SDL_Log("Cannot create Text: Text string is null\n");
-		instantiated = false;
-	}
 	else if(!(init_flags & INIT_TTF))
-	{
 		SDL_Log("Cannot create Text '%s': SDL2_ttf is not initialized\n", text);
-		instantiated = false;
-	}
 	else if(fontPath == nullptr)
-	{
 		SDL_Log("Cannot create Text '%s': Font path is null\n", text);
-		instantiated = false;
-	}
 	else if(size <= 0)
-	{
 		SDL_Log("Cannot create Text '%s': Invalid text size\n", text);
-		instantiated = false;
-	}
 	else
 	{
 		TTF_Font* font = TTF_OpenFont(fontPath, size);
 		if(font == nullptr)
-		{
 			SDL_Log("%s\n", TTF_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text, color);
 			TTF_CloseFont(font);
 			if(surface == nullptr)
-			{
 				SDL_Log("%s\n", TTF_GetError());
-				instantiated = false;
-			}
 			else
 			{
 				texture = SDL_CreateTextureFromSurface(Renderer::get(), surface);
 				SDL_FreeSurface(surface);
 				if(texture == nullptr)
-				{
 					SDL_Log("%s\n", SDL_GetError());
-					instantiated = false;
-				}
 				else
 				{
 					int w, h;
 					if(SDL_QueryTexture(texture, nullptr, nullptr, &w, &h) != 0)
-					{
 						SDL_Log("%s\n", SDL_GetError());
-						instantiated = false;
-					}
 					else
 					{
 						SDL_Rect rect = {0, 0, w, h};
@@ -342,23 +300,14 @@ Text::Text(const char* const text, const char* const fontPath, const short size,
 Gif::Gif(const char* const path) : Anim()
 {
 	if(path == nullptr)
-	{
 		SDL_Log("Cannot create Gif: Gif path is null\n");
-		instantiated = false;
-	}
 	else if(!(init_flags & INIT_IMAGE))
-	{
 		SDL_Log("Cannot create Gif '%s': SDL2_image is not initialized\n", path);
-		instantiated = false;
-	}
 	else
 	{
 		IMG_Animation* gif = IMG_LoadAnimation(path);
 		if(gif == nullptr)
-		{
 			SDL_Log("%s\n", IMG_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			for(int i = 0; i < gif -> count; i++)
@@ -407,23 +356,14 @@ bool Gif::next()
 Spritesheet::Spritesheet(const char* const path) : Anim()
 {
 	if(path == nullptr)
-	{
 		SDL_Log("Cannot create Spritesheet: Spritesheet path is null\n");
-		instantiated = false;
-	}
 	else if(!(init_flags & INIT_IMAGE))
-	{
 		SDL_Log("Cannot create Spritesheet '%s': SDL2_image is not initialized\n", path);
-		instantiated = false;
-	}
 	else
 	{
 		IMG_Animation* sprites = IMG_LoadAnimation(path);
 		if(sprites == nullptr)
-		{
 			SDL_Log("%s\n", IMG_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			for(int i = 0; i < sprites -> count; i++)
@@ -460,30 +400,26 @@ void Spritesheet::setIndex(const int newIndex)
 Front::Front(const char* const name)
 {
 	if(name == nullptr)
-	{
 		SDL_Log("Cannot create window: Window name is null\n");
-		instantiated = false;
-	}
 	else
 	{
 		if((window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, APP_W, APP_H, SDL_WINDOW_SHOWN)) == nullptr)
-		{
 			SDL_Log("%s\n", SDL_GetError());
-			instantiated = false;
-		}
 		else
 		{
 			Renderer::set(window, -1, SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 			if(Renderer::get() == nullptr)
-			{
 				SDL_Log("%s\n", SDL_GetError());
-				instantiated = false;
-			}
 			else
 			{
 				canvas = std::make_unique<Canvas>();
-				mustRender = true;
-				instantiated = true;
+				if(!canvas -> isInstantiated())
+					SDL_Log("Cannot create Front: Canvas is not instantiated\n");
+				else
+				{
+					mustRender = true;
+					instantiated = true;
+				}
 			}
 		}
 	}
@@ -492,7 +428,8 @@ Front::Front(const char* const name)
 Front::~Front()
 {
 	Renderer::destroy();
-	SDL_DestroyWindow(window);
+	if(window != nullptr)
+		SDL_DestroyWindow(window);
 }
 
 /* Singleton: for one App there should only be

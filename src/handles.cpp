@@ -40,18 +40,17 @@ Sint32 handleWelcome(const std::shared_ptr<Front> front, const std::shared_ptr<B
 
 	else
 	{
-		const inputs_t userInputs = back -> getUserInputs();
-		for(std::shared_ptr<Click> click : back -> getClicks())
+		for(std::shared_ptr<Pressable> click : back -> getClicks())
 		{
-			switch(click -> pressed(userInputs))
+			switch(click -> pressed())
 			{
 				// ...
 			}
 		}
 
-		for(std::shared_ptr<Key> key : back -> getKeys())
+		for(std::shared_ptr<Pressable> key : back -> getKeys())
 		{
-			switch(key -> pressed(userInputs.keys))
+			switch(key -> pressed())
 			{
 				case SDL_SCANCODE_RIGHT:
 					return INPUTTEST;
@@ -78,18 +77,17 @@ Sint32 handleInputTest(const std::shared_ptr<Front> front, const std::shared_ptr
 
 	else
 	{
-		const inputs_t userInputs = back -> getUserInputs();
-		for(std::shared_ptr<Click> click : back -> getClicks())
+		for(std::shared_ptr<Pressable> click : back -> getClicks())
 		{
-			switch(click -> pressed(userInputs))
+			switch(click -> pressed())
 			{
 				// ...
 			}
 		}
 
-		for(std::shared_ptr<Key> key : back -> getKeys())
+		for(std::shared_ptr<Pressable> key : back -> getKeys())
 		{
-			switch(key -> pressed(userInputs.keys))
+			switch(key -> pressed())
 			{
 				case SDL_SCANCODE_LEFT:
 					return WELCOME;
@@ -118,18 +116,17 @@ Sint32 handleTemplate(const std::shared_ptr<Front> front, const std::shared_ptr<
 
 	else
 	{
-		const inputs_t userInputs = back -> getUserInputs();
-		for(std::shared_ptr<Click> click : back -> getClicks())
+		for(std::shared_ptr<Pressable> click : back -> getClicks())
 		{
-			switch(click -> pressed(userInputs))
+			switch(click -> pressed())
 			{
 				// Handle click events here
 			}
 		}
 
-		for(std::shared_ptr<Key> key : back -> getKeys())
+		for(std::shared_ptr<Pressable> key : back -> getKeys())
 		{
-			switch(key -> pressed(userInputs.keys))
+			switch(key -> pressed())
 			{
 				// Handle keys here
 			}

@@ -8,8 +8,9 @@ class Instantiable
 {
 protected:
 	bool instantiated;
+	Instantiable();
+
 public:
-	Instantiable() = default;
 	bool isInstantiated();
 };
 
@@ -113,18 +114,18 @@ public:
 /* Class for sound effects or music that is not
  * the background music
  */
-class Sfx final : public Mix
+class Chunk final : public Mix
 {
 private:
 	Mix_Chunk* chunk;
 	int channel;
 public:
-	Sfx(const char* const path, int channel);
-	~Sfx();
-	int getVolume() override;
-	void setVolume(int newVolume) override;
+	Chunk(const char* const path, int channel);
+	~Chunk();
 	int getChannel();
 	void setChannel(int newChannel);
+	int getVolume() override;
+	void setVolume(int newVolume) override;
 	bool play() override;
 	void pause() override;
 	void resume() override;
