@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "macros.hpp"
-#include "front.hpp"
+#include <common.hpp>
+#include <wrap.hpp>
+#include <front.hpp>
 
 /* Struct to handle the mouse, keyboard and
  * closing the app
@@ -15,27 +16,73 @@ typedef struct inputs
 	Uint32 mouseClicks;
 	int mouseX;
 	int mouseY;
-} inputs_t;
+}
+inputs_t;
+
+/* Spritesheet option for the children classes of
+ * Input, if you want a rendered button
+ */
+class SpritesAddon
+{
+protected:
+	std::shared_ptr<Spritesheet> spritesheet;
+public:
+	SpritesAddon();
+	void setSpritesheet(const std::shared_ptr<Spritesheet> newSpritesheet);
+};
+
+/* Sound effect option for the children classes
+ * of Input, if you want a rendered button
+ */
+class SfxAddon
+{
+protected:
+	std::shared_ptr<Chunk> chunk;
+public:
+	SfxAddon();
+	void setSfx(const std::shared_ptr<Chunk> newChunk);
+};
+
+/* User inputs wrapper to handle the inputs
+ * related variables easily
+ */
+class UserInputs
+{
+protected:
+	static std::shared_ptr<inputs_t> userInputs;
+
+public:
+	static const std::shared_ptr<inputs_t> get();
+	static void set(std::shared_ptr<inputs_t> newUserInputs);
+};
+
+/* Small abstract class made for the vectors in the Back class
+ */
+class Pressable : public Instantiable
+{
+public:
+	Pressable() = default;
+	virtual Uint32 pressed() = 0;
+};
 
 /* Protected Input class, for the mouse and
  * keyboard in its children classes
  * (Controller support might get added)
  */
-class Input
+template<typename... Addons>
+class Input : public Pressable, public Addons...
 {
 protected:
-	std::shared_ptr<Spritesheet> spritesheet;
 	bool wasPressed;
 	Input();
-	Input(const char* const path);
-	Input(const std::shared_ptr<Spritesheet> spritesheet);
 };
 
 /* Class for click events, only detects if the
  * button is pressed if no Spritesheet, animates
  * the said Spritesheet otherwise
  */
-class Click final : public Input
+template<typename... Addons>
+class Click final : public Input<Addons...>
 {
 private:
 	Uint32 click;
@@ -43,9 +90,8 @@ private:
 
 public:
 	Click(const Uint32 click);
-	Click(const Uint32 click, const char* const path);
-	Click(const Uint32 click, std::shared_ptr<Spritesheet> spritesheet);
-	Uint32 pressed(const inputs_t& userInputs);
+	Uint32 pressed() override;
+
 };
 
 /* Class for keyboard events, plays an animation
@@ -53,16 +99,15 @@ public:
  * pressed or not if there is a Spritesheet,
  * only returns its state otherwise
  */
-class Key final : public Input
+template<typename... Addons>
+class Key final : public Input<Addons...>
 {
 private:
 	Uint8 value;
 
 public:
 	Key(const Uint8 value);
-	Key(const Uint8 value, const char* const path);
-	Key(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet);
-	Uint8 pressed(const Uint8* keys);
+	Uint32 pressed() override;
 };
 
 /* Empty Entity class for you to define, it may
@@ -72,31 +117,31 @@ public:
 class Entity;
 
 /* Object that manages all of the back-end */
-class Back
+class Back : public Instantiable
 {
 private:
 	static std::shared_ptr<Back> instance;
-	std::vector<std::shared_ptr<Key>> keys;
-	std::vector<std::shared_ptr<Click>> clicks;
+	std::vector<std::shared_ptr<Pressable>> clicks;
+	std::vector<std::shared_ptr<Pressable>> keys;
 	std::vector<std::shared_ptr<Entity>> entities; // You might want to make this a vector of a child class of Entity
-	inputs_t userInputs;
 	Back();
 
 public:
 	static std::shared_ptr<Back> getInstance();
 	void addClick(const Uint32 click);
-	void addClick(const Uint32 click, const char* const path);
 	void addClick(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet);
+	void addClick(const Uint32 click, const std::shared_ptr<Chunk> chunk);
+	void addClick(const Uint32 click, const std::shared_ptr<Spritesheet> spritesheet, const std::shared_ptr<Chunk> chunk);
 	void addKey(const Uint8 value);
-	void addKey(const Uint8 value, const char* const path);
 	void addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet);
+	void addKey(const Uint8 value, const std::shared_ptr<Chunk> chunk);
+	void addKey(const Uint8 value, const std::shared_ptr<Spritesheet> spritesheet, const std::shared_ptr<Chunk> chunk);
 	void addEntity(/* ... */); // Complete this to make your own Entity adder
 	bool updateEvent();
 	void updateKeys();
 	void updateMouse();
-	const std::vector<std::shared_ptr<Key>>& getKeys() const;
-	const std::vector<std::shared_ptr<Click>>& getClicks() const;
-	const inputs_t& getUserInputs() const;
+	const std::vector<std::shared_ptr<Pressable>>& getKeys() const;
+	const std::vector<std::shared_ptr<Pressable>>& getClicks() const;
 	void clearInputs();
 	void clearEntities();
 	Sint32 update(std::function<Sint32(const std::shared_ptr<Front>, std::shared_ptr<Back>)> handle,

@@ -1,8 +1,9 @@
 /* Init functions header file for the main */
+
 #pragma once
 
-#include "macros.hpp"
-#include "app.hpp"
+#include <common.hpp>
+#include <app.hpp>
 
 
 /* WARNING: Do NOT remove the pass function. */

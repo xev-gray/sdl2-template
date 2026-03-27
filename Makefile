@@ -16,9 +16,9 @@ ifeq ($(OS), Windows_NT)   # Windows
 	DLL = *.dll
 endif
 
-# To compile from Unix-like to Windows, replace
-# all values in the following variables with the
-# ones in comments.
+# To compile from Unix-like systems to Windows,
+# replace all values in the following variables
+# with the ones in comments.
 
 ifeq ($(UNAME), Darwin)    # MacOS
 	CXX = clang++ #x86_64-w64-mingw32-g++
@@ -41,9 +41,10 @@ endif
 SRC = src
 BIN = bin
 INC = -Iinclude
-CFLAGS = -Wall
+CFLAGS = -Wall -Ofast
 EXT += -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lSDL2_net
-OBJ = $(addsuffix .o, $(addprefix $(BIN)/, main front back app inits handles))
+# Include your own sources files below
+OBJ = $(addsuffix .o, $(addprefix $(BIN)/, main wrap front back app inits handles))
 
 # The 'zip' option is made to automatically create
 # a shippable archive of your app, but it works
@@ -57,10 +58,10 @@ zip: small
 small: clean all mrproper
 
 all: $(OBJ)
-	$(CXX) $(INC) $(LIB) $^ -o $(EXE) $(EXT) $(CFLAGS)
+	$(CXX) $^ $(INC) $(LIB) $(EXT) -o $(NAME) $(CFLAGS)
 
 $(BIN)/%.o: $(SRC)/%.cpp
-	$(CXX) $(INC) $(LIB) -c $< -o $@ $(EXT) $(CFLAGS)
+	$(CXX) -c $< $(INC) $(LIB) $(EXT) -o $@ $(CFLAGS)
 
 clean:
 	rm -f $(OBJ) $(EXE) $(addsuffix .gz, $(TAR))
